@@ -1,5 +1,5 @@
-#include "lidar_corners/Corners.h"
-#include "lidar_corners/Utils.h"
+#include "Corners.h"
+#include "Utils.h"
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/common/eigen.h>

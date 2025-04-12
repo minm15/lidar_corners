@@ -7,16 +7,20 @@ source install/setup.bash
 ```
 
 ## Usage
+This is the core ROS 2 node for future integration with LiDAR topics (e.g., /velodyne_points). It is currently under development.
 ```
-ros2 run lidar_corners lidar_corners_node
 ros2 launch lidar_corners lidar_corners.launch.py
 ```
-This is the core ROS 2 node for future integration with LiDAR topics (e.g., /velodyne_points). It is currently under development.
+## Development Progress 
 
-```
-ros2 run lidar_corners detect_calib_board <path_to_file.pcd>
-```
-This tool takes a single .pcd file, detects the planar surface using RANSAC, and estimates the bounding box of the detected plane.
+This project is under active development. The current goal is to extract and visualize corner-like features from LiDAR point clouds. Below is a short demo of the current processing pipeline:
+
+![Demo](assets/demo.gif)
+
+### Features in Progress
+
+- Write an advanced algorithm to remove the ground point rather than filtering with z-value
+- Filter out noisy planes
 
 
 
