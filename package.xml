@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package format="3">
+  <name>lidar_corners</name>
+  <version>0.0.1</version>
+  <description>
+    A ROS 2 (Humble) package that subscribes to LiDAR pointclouds, detects calibration-board corners, and displays them in a window.
+  </description>
+  <maintainer email="someone@example.com">Your Name</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>pcl_conversions</depend>
+  <depend>pcl_msgs</depend>
+  <depend>pcl_ros</depend>
+  <depend>OpenCV</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
