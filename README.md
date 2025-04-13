@@ -2,7 +2,7 @@
 
 ## Build
 ```
-colcon build --packages-select lidar_corners
+colcon build --symlink-select --packages-select lidar_corners
 source install/setup.bash
 ```
 

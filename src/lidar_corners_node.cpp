@@ -5,6 +5,7 @@
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <cmath> 
+#include "lidar_corners_node.hpp"
 #include "GroundRemoval.h"
 
 using std::placeholders::_1;
@@ -15,25 +16,36 @@ public:
     LidarPlaneExtractNode()
     : Node("lidar_plane_extract_node")
     {
-        // Subscribe the lidar topic
-        this->declare_parameter<std::string>("input_topic", "/velodyne_points");
-        std::string input_topic = this->get_parameter("input_topic").as_string();
+        // === Get Parameters ===
+        this->declare_parameter<std::string>("lidar_topic", "/velodyne_points");
+        this->declare_parameter<double>("z_max_for_ground", -0.35);
+        this->declare_parameter<double>("ransac_dist_threshold", 0.1);
+        this->declare_parameter<double>("normal_diff_threshold", 0.1);
+        this->declare_parameter<int>("min_inliers", 30);
+        this->declare_parameter<int>("max_ground_planes", 2);
 
+        this->get_parameter("lidar_topic", lidar_topic);
+        this->get_parameter("z_max_for_ground", z_max_for_ground_);
+        this->get_parameter("ransac_dist_threshold", ransac_dist_threshold_);
+        this->get_parameter("normal_diff_threshold", normal_diff_threshold_);
+        this->get_parameter("min_inliers", min_inliers_);
+        this->get_parameter("max_ground_planes", max_ground_planes_);
+
+        // === Subscription & Publisher ===
         sub_cloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-            input_topic,
+            lidar_topic,
             10,
             std::bind(&LidarPlaneExtractNode::cloudCallback, this, _1)
         );
 
-        // Publish
         pub_plane_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
             "plane_points", 
             10
         );
 
         RCLCPP_INFO(this->get_logger(),
-                    "LidarPlaneExtractNode started, subscribing to topic: %s",
-                    input_topic.c_str());
+                    "LidarPlaneExtractNode started, subscribing to: %s",
+                    lidar_topic.c_str());
     }
 
 private:
@@ -73,11 +85,11 @@ private:
         pcl::PointCloud<pcl::PointXYZ>::Ptr no_ground_cloud = 
             advanced_ground_remove::removeGroundByRansacWithZ(
                 front_cloud,
-                z_max_for_ground,
-                ransac_dist_threshold,
-                normal_diff_threshold,
-                min_inliers,
-                max_ground_planes
+                static_cast<float>(z_max_for_ground_),
+                static_cast<float>(ransac_dist_threshold_),
+                static_cast<float>(normal_diff_threshold_),
+                static_cast<size_t>(min_inliers_),
+                max_ground_planes_
             );
 
         if (!no_ground_cloud || no_ground_cloud->empty())
@@ -119,9 +131,6 @@ private:
                     "Publish plane with %zu points, remain cloud size=%zu",
                     planes_aggregate->size(), no_ground_cloud->size());
     }
-
-    rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_plane_;
 };
 
 int main(int argc, char **argv)
