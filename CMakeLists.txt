@@ -21,6 +21,7 @@ include_directories(
 add_executable(lidar_corners_node
   src/lidar_corners_node.cpp
   src/Corners.cpp
+  src/GroundRemoval.cpp
 )
 
 # === detect_calib_board ===

@@ -1,15 +1,11 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
-#include <pcl/filters/passthrough.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
-
 #include <cmath> 
+#include "GroundRemoval.h"
 
 using std::placeholders::_1;
 
@@ -43,103 +39,76 @@ public:
 private:
     void cloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
     {
-        // Convert from ROS to PCL
+        // A. ROS -> PCL
         pcl::PointCloud<pcl::PointXYZ>::Ptr raw_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::fromROSMsg(*msg, *raw_cloud);
-
         if (raw_cloud->empty())
         {
-            RCLCPP_WARN(this->get_logger(), "Received empty point cloud.");
+            RCLCPP_WARN(this->get_logger(), "Received empty cloud.");
             return;
         }
 
+        // B. Filter with angle
         pcl::PointCloud<pcl::PointXYZ>::Ptr front_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         front_cloud->reserve(raw_cloud->size());
         for (auto &pt : raw_cloud->points)
         {
             float angle_deg = std::atan2(pt.y, pt.x) * 180.0f / static_cast<float>(M_PI);
             if (angle_deg >= -40.0f && angle_deg <= 40.0f)
-            {
                 front_cloud->push_back(pt);
-            }
         }
         if (front_cloud->empty())
         {
-            RCLCPP_WARN(this->get_logger(), "All points outside -30~30 deg. Nothing to process.");
+            RCLCPP_WARN(this->get_logger(), "No points in [-40,40] deg range.");
             return;
         }
 
         // Remove the ground points
-        pcl::PointCloud<pcl::PointXYZ>::Ptr no_ground_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+        float z_max_for_ground = -0.35f; 
+        float ransac_dist_threshold = 0.1f; 
+        float normal_diff_threshold = 0.1f; 
+        size_t min_inliers = 30;   
+        int max_ground_planes = 2; 
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr no_ground_cloud = 
+            advanced_ground_remove::removeGroundByRansacWithZ(
+                front_cloud,
+                z_max_for_ground,
+                ransac_dist_threshold,
+                normal_diff_threshold,
+                min_inliers,
+                max_ground_planes
+            );
+
+        if (!no_ground_cloud || no_ground_cloud->empty())
         {
-            pcl::PassThrough<pcl::PointXYZ> pass;
-            pass.setInputCloud(front_cloud);
-            pass.setFilterFieldName("z");
-            pass.setFilterLimits(-0.3, 100.0); 
-            pass.filter(*no_ground_cloud);
-        }
-        if (no_ground_cloud->empty())
-        {
-            RCLCPP_WARN(this->get_logger(), "All points were filtered out as ground. No points left.");
+            RCLCPP_WARN(this->get_logger(), "All points removed or empty after ground removal.");
             return;
         }
 
         // Use RANSAC to detect the plane
-        int max_planes = 1;
-        size_t min_inliers = 50;
-        float distance_threshold = 0.4f;
-
-        pcl::PointCloud<pcl::PointXYZ>::Ptr remaining_cloud(new pcl::PointCloud<pcl::PointXYZ>(*no_ground_cloud));
         pcl::PointCloud<pcl::PointXYZ>::Ptr planes_aggregate(new pcl::PointCloud<pcl::PointXYZ>);
-        planes_aggregate->header   = remaining_cloud->header;
+        planes_aggregate->header   = no_ground_cloud->header;
         planes_aggregate->is_dense = false;
 
-        int plane_count = 0;
-        while (plane_count < max_planes && !remaining_cloud->empty())
         {
             // a. RANSAC initialization
             pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_plane(
-                new pcl::SampleConsensusModelPlane<pcl::PointXYZ>(remaining_cloud)
+                new pcl::SampleConsensusModelPlane<pcl::PointXYZ>(no_ground_cloud)
             );
             pcl::RandomSampleConsensus<pcl::PointXYZ> ransac(model_plane);
-            ransac.setDistanceThreshold(distance_threshold);
+            ransac.setDistanceThreshold(0.3);  
             ransac.computeModel();
-
+            
             // b. Obtain the inliers
-            std::vector<int> inliers_indices;
-            ransac.getInliers(inliers_indices);
-
-            if (inliers_indices.size() < min_inliers)
+            std::vector<int> inliers_idx;
+            ransac.getInliers(inliers_idx);
+            if (!inliers_idx.empty())
             {
-                RCLCPP_INFO(this->get_logger(),
-                            "Plane [%d]: inliers too few (%zu). Stop extracting more planes.",
-                            plane_count, inliers_indices.size());
-                break;
+                pcl::copyPointCloud(*no_ground_cloud, inliers_idx, *planes_aggregate);
             }
-
-            pcl::PointCloud<pcl::PointXYZ>::Ptr this_plane(new pcl::PointCloud<pcl::PointXYZ>);
-            pcl::copyPointCloud(*remaining_cloud, inliers_indices, *this_plane);
-
-            *planes_aggregate += *this_plane;
-
-            // c. Remove the inliers for the current plane
-            pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices);
-            inliers_ptr->indices = inliers_indices;
-            pcl::ExtractIndices<pcl::PointXYZ> extract;
-            extract.setInputCloud(remaining_cloud);
-            extract.setIndices(inliers_ptr);
-            extract.setNegative(true);  
-            pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
-            extract.filter(*tmp);
-            remaining_cloud.swap(tmp);
-
-            RCLCPP_INFO(this->get_logger(),
-                        "Plane [%d]: inliers=%zu. Remain points=%zu",
-                        plane_count, inliers_indices.size(), remaining_cloud->size());
-
-            plane_count++;
         }
-        
+
         // Publish the result
         sensor_msgs::msg::PointCloud2 out_msg;
         pcl::toROSMsg(*planes_aggregate, out_msg);
@@ -147,8 +116,8 @@ private:
         pub_plane_->publish(out_msg);
 
         RCLCPP_INFO(this->get_logger(),
-                    "Published [%d] planes, total inliers=%zu, remain=%zu",
-                    plane_count, planes_aggregate->size(), remaining_cloud->size());
+                    "Publish plane with %zu points, remain cloud size=%zu",
+                    planes_aggregate->size(), no_ground_cloud->size());
     }
 
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
