@@ -26,6 +26,7 @@ private:
     double normal_diff_threshold_;
     int min_inliers_;
     int max_ground_planes_;
+    double dist_limit_;
 };
 
 #endif  // LIDAR_PLANE_EXTRACT_NODE_HPP_

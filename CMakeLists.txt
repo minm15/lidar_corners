@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(lidar_corners)
+project(lidar_detect_board)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,9 +17,9 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-# === lidar_corners_node ===
-add_executable(lidar_corners_node
-  src/lidar_corners_node.cpp
+# === lidar_detect_plane_node ===
+add_executable(lidar_detect_board_node
+  src/lidar_detect_board_node.cpp
   src/Corners.cpp
   src/GroundRemoval.cpp
 )
@@ -30,7 +30,7 @@ add_executable(detect_calib_board
 )
 
 # === Link common dependencies ===
-foreach(target IN ITEMS lidar_corners_node detect_calib_board)
+foreach(target IN ITEMS lidar_detect_board_node detect_calib_board)
   target_link_libraries(${target}
     ${PCL_LIBRARIES}
     ${OpenCV_LIBRARIES}
@@ -44,7 +44,7 @@ endforeach()
 
 # === Install both targets ===
 install(TARGETS
-  lidar_corners_node
+  lidar_detect_board_node
   detect_calib_board
   DESTINATION lib/${PROJECT_NAME}
 )

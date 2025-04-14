@@ -2,14 +2,14 @@
 
 ## Build
 ```
-colcon build --symlink-select --packages-select lidar_corners
+colcon build --symlink-install --packages-select lidar_detect_board
 source install/setup.bash
 ```
 
 ## Usage
 This is the core ROS 2 node for future integration with LiDAR topics (e.g., /velodyne_points). It is currently under development.
 ```
-ros2 launch lidar_corners lidar_corners.launch.py
+ros2 launch lidar_detect_board lidar_detect_board.launch.py
 ```
 ## Development Progress 
 

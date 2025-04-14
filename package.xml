@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package format="3">
-  <name>lidar_corners</name>
+  <name>lidar_detect_board</name>
   <version>0.0.1</version>
   <description>
     A ROS 2 (Humble) package that subscribes to LiDAR pointclouds, detects calibration-board corners, and displays them in a window.
