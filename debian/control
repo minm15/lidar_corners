@@ -1,0 +1,12 @@
+Source: ros-humble-lidar-detect-board
+Section: misc
+Priority: optional
+Maintainer: Your Name <someone@example.com>
+Build-Depends: debhelper (>= 9.0.0), ros-humble-ament-cmake, ros-humble-cv-bridge, ros-humble-image-transport, ros-humble-pcl-conversions, ros-humble-pcl-msgs, ros-humble-pcl-ros, ros-humble-rclcpp, ros-humble-sensor-msgs, ros-humble-std-msgs
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-humble-lidar-detect-board
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-humble-cv-bridge, ros-humble-image-transport, ros-humble-pcl-conversions, ros-humble-pcl-msgs, ros-humble-pcl-ros, ros-humble-rclcpp, ros-humble-sensor-msgs, ros-humble-std-msgs
+Description: A ROS 2 (Humble) package that subscribes to LiDAR pointclouds, detects calibration-board corners, and displays them in a window.
