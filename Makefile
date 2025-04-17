@@ -1,4 +1,4 @@
-.PHONY: help debian build clean
+.PHONY: help debian build launch clean
 
 help:
 	@echo 'Usage:'
@@ -19,6 +19,10 @@ build:
 	    --symlink-install \
 	    --cmake-args -DCMAKE_BUILD_TYPE=Release \
 	                 -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
+
+launch:
+	. /opt/ros/humble/setup.sh && \
+	ros2 launch lidar_detect_board lidar_detect_board.launch.xml
 
 clean:
 	rm -rf .obj-* install build log *.deb *.ddeb

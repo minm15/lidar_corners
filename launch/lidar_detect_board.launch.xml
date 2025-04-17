@@ -1,0 +1,9 @@
+<launch>
+  <node
+      pkg="lidar_detect_board"
+      exec="lidar_detect_board_node"
+      name="lidar_detect_board_node"
+      output="screen">
+    <param from="$(find-pkg-share lidar_detect_board)/config/lidar_detect_board_node.yaml"/>
+  </node>
+</launch>
