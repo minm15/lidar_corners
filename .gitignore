@@ -3,6 +3,7 @@
 .*~
 *.swp
 *.swo
+/.cache/
 
 # colcon
 /log/
