@@ -1,0 +1,4 @@
+/files
+/.debhelper/
+/debhelper-build-stamp
+/ros-humble-lidar-detect-board*

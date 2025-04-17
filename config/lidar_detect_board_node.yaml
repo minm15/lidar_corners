@@ -1,0 +1,10 @@
+# Parameter file for a ROS 2 node
+/**:
+  ros__parameters:
+    # General parameters
+    z_max_for_ground: -0.35
+    ransac_dist_threshold: 0.1
+    normal_diff_threshold: 0.1
+    min_inliers: 30
+    max_ground_planes: 2
+    dist: 50.0

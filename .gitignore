@@ -1,0 +1,16 @@
+# editors
+*~
+.*~
+*.swp
+*.swo
+/.cache/
+
+# colcon
+/log/
+/install/
+/build/
+
+# Debian package
+/.obj-*/
+/*.deb
+/*.ddeb
