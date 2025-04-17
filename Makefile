@@ -16,9 +16,9 @@ debian:
 build:
 	. /opt/ros/humble/setup.sh && \
 	colcon build \
-		--symlink-install \
-		--packages-select lidar_detect_board \
-		--cmake-args -DCMAKE_BUILD_TYPE=Release
+	    --symlink-install \
+	    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+	                 -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
 
 clean:
 	rm -rf .obj-* install build log *.deb *.ddeb
